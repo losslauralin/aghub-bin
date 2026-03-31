@@ -14,16 +14,13 @@ jobs:
       - name: Check for new version
         id: check
         run: |
-          pip install nvchecker
           OLD_VER=$(grep '^pkgver=' PKGBUILD | cut -d= -f2)
-          nvchecker -c .nvchecker.toml || true
-          if [ -f new_ver.json ]; then
-            NEW_VER=$(python3 -c "import json; print(json.load(open('new_ver.json'))['aghub-bin'])")
-          else
-            NEW_VER=$OLD_VER
-          fi
+          # Get latest release tag from GitHub API
+          LATEST_TAG=$(curl -sL "https://api.github.com/repos/AkaraChen/aghub/releases/latest" | jq -r '.tag_name')
+          NEW_VER="${LATEST_TAG#v}"
           echo "old_ver=$OLD_VER" >> "$GITHUB_OUTPUT"
           echo "new_ver=$NEW_VER" >> "$GITHUB_OUTPUT"
+          echo "Old: $OLD_VER -> New: $NEW_VER"
 
       - name: Update PKGBUILD
         if: steps.check.outputs.old_ver != steps.check.outputs.new_ver
@@ -40,8 +37,14 @@ jobs:
             [ -f "$fname" ] || curl -sLO "$url_expanded"
           done
 
-          sha=$(sha256sum aghub_*_amd64.deb agentctl-*.tar.gz aghub.desktop 2>/dev/null | awk '{print "'\''"$1"'\''"}')
-          sed -i "/^sha256sums=/,/)/c\\sha256sums=($sha)" PKGBUILD
+          # Regenerate sha256sums
+          SUMS=()
+          for s in "${source[@]}"; do
+            fname=$(basename "$s")
+            SUMS+=("$(sha256sum "$fname" | awk '{print "'\''"$1"'\''"}')")
+          done
+          printf 'sha256sums=(%s)\n' "$(printf '%s\n' "${SUMS[@]}" | paste -sd' ')" >> /tmp/sums
+          sed -i "/^sha256sums=/,/)/c\\$(cat /tmp/sums)" PKGBUILD
 
           # Update .SRCINFO
           docker run --rm -v "$PWD":/pkg archlinux:latest bash -c \
