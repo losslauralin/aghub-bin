@@ -2,7 +2,7 @@
 
 AUR binary package for [aghub](https://github.com/AkaraChen/aghub) — One hub for every AI coding agent.
 
-This repo hosts the [PKGBUILD](PKGBUILD) and CI workflow for automatically publishing `aghub-bin` to the [Arch User Repository](https://aur.archlinux.org/packages/aghub-bin).
+This is an unofficial community-maintained package. The aghub project and its trademarks belong to the upstream developers.
 
 ## Install
 
@@ -16,4 +16,18 @@ yay -S aghub-bin
 
 - Upstream: [AkaraChen/aghub](https://github.com/AkaraChen/aghub)
 - AUR: [aghub-bin](https://aur.archlinux.org/packages/aghub-bin)
-- Source package: [aghub](https://aur.archlinux.org/packages/aghub) (if available)
+
+## Reporting Issues
+
+- **Application bugs** (UI glitches, agent config errors, etc.) → report to [upstream](https://github.com/AkaraChen/aghub/issues)
+- **Packaging issues** (install failures, .desktop file, PKGBUILD/checksum errors) → report [here](https://github.com/losslauralin/aur-aghub-bin/issues)
+
+## Troubleshooting
+
+### Wayland users (blank window / rendering issues)
+
+aghub uses WebKit2GTK which may not render correctly under Wayland. The `.desktop` entry already forces X11 mode. If launching from terminal:
+
+```bash
+GDK_BACKEND=x11 WEBKIT_DISABLE_DMABUF_RENDERER=1 aghub
+```
